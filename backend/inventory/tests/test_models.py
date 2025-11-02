@@ -1,5 +1,10 @@
 from __future__ import annotations
 
+from io import BytesIO
+
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.utils import timezone
+from PIL import Image
 from django.utils import timezone
 
 from inventory import models
@@ -45,3 +50,76 @@ def test_publication_log_str(db):
     log = models.PublicationLog.objects.create(car=car, channel=channel)
 
     assert str(log) == f"В обработке – {car} в {channel}"
+
+
+def generate_test_image(width=4000, height=3000, color=(255, 0, 0), image_format="JPEG") -> bytes:
+    buffer = BytesIO()
+    image = Image.new("RGB", (width, height), color)
+    image.save(buffer, format=image_format)
+    buffer.seek(0)
+    return buffer.read()
+
+
+def test_car_image_is_optimised_on_save(db, settings, tmp_path):
+    settings.MEDIA_ROOT = tmp_path
+
+    car = models.Car.objects.create(
+        title="Optimised Car",
+        brand="Audi",
+        model_name="Q7",
+        manufacture_year=2021,
+        price=50000,
+        currency="USD",
+        mileage_km=5000,
+        contact_name="Manager",
+        contact_phone="+375291112233",
+    )
+
+    upload = SimpleUploadedFile(
+        "big-photo.png",
+        generate_test_image(image_format="PNG"),
+        content_type="image/png",
+    )
+
+    car_image = models.CarImage.objects.create(car=car, image=upload)
+
+    car_image.image.open()
+    with Image.open(car_image.image) as processed:
+        assert max(processed.size) <= 2560
+        assert processed.format == "JPEG"
+
+    assert car_image.image.name.endswith(".jpg")
+
+
+def test_only_single_primary_image_is_kept(db, settings, tmp_path):
+    settings.MEDIA_ROOT = tmp_path
+
+    car = models.Car.objects.create(
+        title="Primary Car",
+        brand="Tesla",
+        model_name="Model S",
+        manufacture_year=2022,
+        price=90000,
+        currency="USD",
+        mileage_km=1000,
+        contact_name="Manager",
+        contact_phone="+375291112233",
+    )
+
+    first_image = models.CarImage.objects.create(
+        car=car,
+        image=SimpleUploadedFile("first.jpg", generate_test_image(1200, 800)),
+        is_primary=True,
+    )
+
+    second_image = models.CarImage.objects.create(
+        car=car,
+        image=SimpleUploadedFile("second.jpg", generate_test_image(1200, 800)),
+        is_primary=True,
+    )
+
+    first_image.refresh_from_db()
+    second_image.refresh_from_db()
+
+    assert second_image.is_primary is True
+    assert first_image.is_primary is False

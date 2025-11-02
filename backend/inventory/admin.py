@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from django.contrib import admin
+from django.utils.html import format_html
 
 from . import models
 
@@ -9,6 +10,17 @@ from . import models
 class CarImageInline(admin.TabularInline):
     model = models.CarImage
     extra = 1
+    fields = ("preview", "image", "caption", "is_primary", "ordering")
+    readonly_fields = ("preview",)
+
+    @admin.display(description="Превью")
+    def preview(self, obj):
+        if obj.pk and obj.image:
+            return format_html(
+                '<img src="{}" style="max-height: 120px; border-radius: 6px;" />',
+                obj.image.url,
+            )
+        return "—"
     fields = ("image", "caption", "is_primary", "ordering")
 
 

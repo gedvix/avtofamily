@@ -6,6 +6,8 @@ from django.db import models
 from django.utils import timezone
 from django.utils.text import slugify
 
+from .services.image_processing import optimise_car_image
+
 
 class TimestampedModel(models.Model):
     """Abstract base with created/updated timestamps."""
@@ -184,6 +186,22 @@ class CarImage(TimestampedModel):
 
     def __str__(self) -> str:
         return f"Фото {self.car}"
+
+    def save(self, *args, **kwargs):
+        if self.image and not getattr(self.image, "_committed", False):
+            file_obj = getattr(self.image, "file", self.image)
+            name, optimised_file = optimise_car_image(file_obj)
+            self.image.save(name, optimised_file, save=False)
+
+        super().save(*args, **kwargs)
+
+        if self.is_primary:
+            (
+                self.__class__
+                .objects.filter(car=self.car, is_primary=True)
+                .exclude(pk=self.pk)
+                .update(is_primary=False)
+            )
 
 
 class PublicationChannel(models.Model):
