@@ -1,0 +1,15 @@
+Metadata-Version: 2.4
+Name: avtofamily-backend
+Version: 0.1.0
+Summary: Backend services for Avtofamily automotive publishing platform
+Author-email: Avtofamily <info@avtofamily.by>
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+Requires-Dist: Django<6,>=5.0
+Requires-Dist: djangorestframework<4,>=3.15
+Requires-Dist: django-filter>=24.2
+Requires-Dist: Pillow>=10.0
+Requires-Dist: django-storages[boto3]>=1.14
+Provides-Extra: dev
+Requires-Dist: pytest>=8.0; extra == "dev"
+Requires-Dist: pytest-django>=4.8; extra == "dev"
