@@ -5,6 +5,7 @@ from io import BytesIO
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.utils import timezone
 from PIL import Image
+from django.utils import timezone
 
 from inventory import models
 

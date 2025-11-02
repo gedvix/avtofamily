@@ -21,6 +21,7 @@ class CarImageInline(admin.TabularInline):
                 obj.image.url,
             )
         return "—"
+    fields = ("image", "caption", "is_primary", "ordering")
 
 
 @admin.register(models.Car)
