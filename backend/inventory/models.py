@@ -202,6 +202,34 @@ class Car(TimestampedModel):
         if not self.slug:
             make_slug = self.make.slug or slugify(self.make.title)
             model_slug = self.model.slug or slugify(self.model.title)
+            slug_source = f"{make_slug}-{model_slug}-{self.vin or self.pk or ''}"
+            self.slug = slugify(slug_source)
+
+        if self.status == self.Status.PUBLISHED and not self.published_at:
+            self.published_at = timezone.now()
+
+        update_fields = kwargs.get("update_fields") or []
+        status_was_changed = False
+
+        if update_fields:
+            status_was_changed = "status" in update_fields
+        else:
+            if self.pk is None:
+                status_was_changed = True
+            else:
+                previous_status = (
+                    self.__class__
+                    .objects.filter(pk=self.pk)
+                    .values_list("status", flat=True)
+                    .first()
+                )
+                status_was_changed = previous_status is not None and previous_status != self.status
+
+        if status_was_changed:
+            self.status_changed_at = timezone.now()
+
+        super().save(*args, **kwargs)
+
             self.slug = slugify(f"{make_slug}-{model_slug}-{self.vin or self.pk or ''}")
             models.Index(fields=["brand", "model_name"]),
         ]
