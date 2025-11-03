@@ -6,6 +6,25 @@ from rest_framework import serializers
 from .. import models
 
 
+class MakeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Make
+        fields = ["id", "title", "slug"]
+
+
+class CarModelSerializer(serializers.ModelSerializer):
+    make = MakeSerializer(read_only=True)
+    make_id = serializers.PrimaryKeyRelatedField(
+        queryset=models.Make.objects.all(),
+        source="make",
+        write_only=True,
+    )
+
+    class Meta:
+        model = models.CarModel
+        fields = ["id", "title", "slug", "make", "make_id"]
+
+
 class FeatureCategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = models.FeatureCategory
@@ -47,6 +66,18 @@ class CarSerializer(serializers.ModelSerializer):
         queryset=models.Feature.objects.all(),
         required=False,
     )
+    make = MakeSerializer(read_only=True)
+    make_id = serializers.PrimaryKeyRelatedField(
+        queryset=models.Make.objects.all(),
+        source="make",
+        write_only=True,
+    )
+    model = CarModelSerializer(read_only=True)
+    model_id = serializers.PrimaryKeyRelatedField(
+        queryset=models.CarModel.objects.select_related("make").all(),
+        source="model",
+        write_only=True,
+    )
 
     class Meta:
         model = models.Car
@@ -55,6 +86,10 @@ class CarSerializer(serializers.ModelSerializer):
             "title",
             "slug",
             "vin",
+            "make",
+            "make_id",
+            "model",
+            "model_id",
             "brand",
             "model_name",
             "generation",
@@ -83,6 +118,12 @@ class CarSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
+        read_only_fields = [
+            "status_changed_at",
+            "published_at",
+            "created_at",
+            "updated_at",
+        ]
         read_only_fields = ["status_changed_at", "published_at", "created_at", "updated_at"]
 
     def create(self, validated_data):
@@ -103,6 +144,15 @@ class CarSerializer(serializers.ModelSerializer):
         if images_data is not None:
             self._sync_images(car, images_data)
         return car
+
+    def validate(self, attrs):
+        make = attrs.get("make") or getattr(self.instance, "make", None)
+        model = attrs.get("model") or getattr(self.instance, "model", None)
+        if make and model and model.make_id != make.id:
+            raise serializers.ValidationError(
+                {"model_id": "Выбранная модель не принадлежит указанной марке."}
+            )
+        return attrs
 
     def _sync_images(self, car: models.Car, images_data: list[dict]) -> None:
         existing = {img.id: img for img in car.images.all()}

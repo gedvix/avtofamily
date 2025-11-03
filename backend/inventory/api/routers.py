@@ -9,6 +9,8 @@ from . import viewsets
 def register_routes(router: DefaultRouter) -> None:
     """Attach inventory endpoints to the shared router."""
 
+    router.register(r"makes", viewsets.MakeViewSet, basename="make")
+    router.register(r"models", viewsets.CarModelViewSet, basename="model")
     router.register(r"cars", viewsets.CarViewSet, basename="car")
     router.register(r"features", viewsets.FeatureViewSet, basename="feature")
     router.register(

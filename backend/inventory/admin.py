@@ -28,6 +28,8 @@ class CarImageInline(admin.TabularInline):
 class CarAdmin(admin.ModelAdmin):
     list_display = (
         "title",
+        "make",
+        "model",
         "brand",
         "model_name",
         "manufacture_year",
@@ -37,6 +39,8 @@ class CarAdmin(admin.ModelAdmin):
     )
     list_filter = (
         "status",
+        "make",
+        "model",
         "brand",
         "model_name",
         "manufacture_year",
@@ -45,12 +49,15 @@ class CarAdmin(admin.ModelAdmin):
     )
     search_fields = (
         "title",
+        "make__title",
+        "model__title",
         "brand",
         "model_name",
         "vin",
         "description",
     )
     inlines = [CarImageInline]
+    autocomplete_fields = ("make", "model", "features")
     prepopulated_fields = {"slug": ("brand", "model_name", "manufacture_year")}
     autocomplete_fields = ("features",)
     filter_horizontal = ("features",)
@@ -61,6 +68,8 @@ class CarAdmin(admin.ModelAdmin):
                 "slug",
                 "vin",
                 "status",
+                "make",
+                "model",
                 "brand",
                 "model_name",
                 "generation",
@@ -100,6 +109,22 @@ class CarAdmin(admin.ModelAdmin):
         }),
     )
     readonly_fields = ("status_changed_at", "published_at", "created_at", "updated_at")
+
+
+@admin.register(models.Make)
+class MakeAdmin(admin.ModelAdmin):
+    list_display = ("title", "slug")
+    search_fields = ("title", "slug")
+    prepopulated_fields = {"slug": ("title",)}
+
+
+@admin.register(models.CarModel)
+class CarModelAdmin(admin.ModelAdmin):
+    list_display = ("title", "make", "slug")
+    list_filter = ("make",)
+    search_fields = ("title", "slug", "make__title")
+    autocomplete_fields = ("make",)
+    prepopulated_fields = {"slug": ("title",)}
 
 
 @admin.register(models.Feature)

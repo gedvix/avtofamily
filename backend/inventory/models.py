@@ -19,6 +19,50 @@ class TimestampedModel(models.Model):
         abstract = True
 
 
+class Make(models.Model):
+    """Represents a vehicle manufacturer."""
+
+    title = models.CharField("Марка", max_length=80, unique=True)
+    slug = models.SlugField("Слаг", max_length=80, unique=True)
+
+    class Meta:
+        verbose_name = "Марка"
+        verbose_name_plural = "Марки"
+        ordering = ["title"]
+
+    def __str__(self) -> str:
+        return self.title
+
+
+class CarModel(models.Model):
+    """Represents a specific model produced by a make."""
+
+    make = models.ForeignKey(
+        Make,
+        on_delete=models.CASCADE,
+        related_name="models",
+        verbose_name="Марка",
+    )
+    title = models.CharField("Модель", max_length=80)
+    slug = models.SlugField("Слаг", max_length=120)
+
+    class Meta:
+        verbose_name = "Модель"
+        verbose_name_plural = "Модели"
+        ordering = ["make__title", "title"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["make", "title"], name="unique_model_per_make"
+            ),
+            models.UniqueConstraint(
+                fields=["make", "slug"], name="unique_model_slug_per_make"
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.make.title} {self.title}"
+
+
 class FeatureCategory(models.Model):
     """Lookup table grouping car features."""
 
@@ -68,6 +112,18 @@ class Car(TimestampedModel):
     title = models.CharField("Заголовок", max_length=255)
     slug = models.SlugField("Слаг", max_length=255, unique=True, blank=True)
     vin = models.CharField("VIN", max_length=32, blank=True)
+    make = models.ForeignKey(
+        Make,
+        on_delete=models.PROTECT,
+        related_name="cars",
+        verbose_name="Марка",
+    )
+    model = models.ForeignKey(
+        CarModel,
+        on_delete=models.PROTECT,
+        related_name="cars",
+        verbose_name="Модель",
+    )
     brand = models.CharField("Марка", max_length=80)
     model_name = models.CharField("Модель", max_length=80)
     generation = models.CharField("Поколение", max_length=80, blank=True)
@@ -136,6 +192,17 @@ class Car(TimestampedModel):
         ordering = ["-created_at"]
         indexes = [
             models.Index(fields=["status"]),
+            models.Index(fields=["make", "model"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.make.title} {self.model.title} ({self.manufacture_year})"
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            make_slug = self.make.slug or slugify(self.make.title)
+            model_slug = self.model.slug or slugify(self.model.title)
+            self.slug = slugify(f"{make_slug}-{model_slug}-{self.vin or self.pk or ''}")
             models.Index(fields=["brand", "model_name"]),
         ]
 

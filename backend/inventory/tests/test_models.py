@@ -4,12 +4,30 @@ from io import BytesIO
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.utils import timezone
+from django.utils.text import slugify
+from PIL import Image
 from PIL import Image
 from django.utils import timezone
 
 from inventory import models
 
 
+def create_make_and_model(make_title: str, model_title: str) -> tuple[models.Make, models.CarModel]:
+    make = models.Make.objects.create(title=make_title, slug=slugify(make_title))
+    model = models.CarModel.objects.create(
+        make=make,
+        title=model_title,
+        slug=slugify(model_title),
+    )
+    return make, model
+
+
+def test_car_status_timestamp_updates(db):
+    make, model = create_make_and_model("Audi", "A4")
+    car = models.Car.objects.create(
+        title="Test Car",
+        make=make,
+        model=model,
 def test_car_status_timestamp_updates(db):
     car = models.Car.objects.create(
         title="Test Car",
@@ -35,6 +53,11 @@ def test_car_status_timestamp_updates(db):
 
 
 def test_publication_log_str(db):
+    make, model = create_make_and_model("BMW", "X5")
+    car = models.Car.objects.create(
+        title="Test Car",
+        make=make,
+        model=model,
     car = models.Car.objects.create(
         title="Test Car",
         brand="BMW",
@@ -63,6 +86,11 @@ def generate_test_image(width=4000, height=3000, color=(255, 0, 0), image_format
 def test_car_image_is_optimised_on_save(db, settings, tmp_path):
     settings.MEDIA_ROOT = tmp_path
 
+    make, model = create_make_and_model("Audi", "Q7")
+    car = models.Car.objects.create(
+        title="Optimised Car",
+        make=make,
+        model=model,
     car = models.Car.objects.create(
         title="Optimised Car",
         brand="Audi",
@@ -94,6 +122,11 @@ def test_car_image_is_optimised_on_save(db, settings, tmp_path):
 def test_only_single_primary_image_is_kept(db, settings, tmp_path):
     settings.MEDIA_ROOT = tmp_path
 
+    make, model = create_make_and_model("Tesla", "Model S")
+    car = models.Car.objects.create(
+        title="Primary Car",
+        make=make,
+        model=model,
     car = models.Car.objects.create(
         title="Primary Car",
         brand="Tesla",

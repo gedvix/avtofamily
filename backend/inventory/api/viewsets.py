@@ -9,6 +9,25 @@ from .. import models
 from . import serializers
 
 
+class MakeViewSet(viewsets.ModelViewSet):
+    queryset = models.Make.objects.all()
+    serializer_class = serializers.MakeSerializer
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ["title", "slug"]
+    ordering_fields = ["title"]
+    ordering = ["title"]
+
+
+class CarModelViewSet(viewsets.ModelViewSet):
+    queryset = models.CarModel.objects.select_related("make").all()
+    serializer_class = serializers.CarModelSerializer
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend]
+    filterset_fields = ["make"]
+    search_fields = ["title", "slug", "make__title"]
+    ordering_fields = ["title", "make__title"]
+    ordering = ["make__title", "title"]
+
+
 class FeatureViewSet(viewsets.ModelViewSet):
     queryset = models.Feature.objects.select_related("category").all()
     serializer_class = serializers.FeatureSerializer
@@ -42,6 +61,7 @@ class PublicationLogViewSet(viewsets.ModelViewSet):
 
 class CarViewSet(viewsets.ModelViewSet):
     queryset = (
+        models.Car.objects.select_related("make", "model")
         models.Car.objects.select_related()
         .prefetch_related(
             "features",
@@ -57,6 +77,8 @@ class CarViewSet(viewsets.ModelViewSet):
     ]
     filterset_fields = [
         "status",
+        "make",
+        "model",
         "brand",
         "model_name",
         "manufacture_year",
@@ -65,6 +87,7 @@ class CarViewSet(viewsets.ModelViewSet):
         "drive_type",
         "customs_cleared",
     ]
+    search_fields = ["title", "make__title", "model__title", "vin", "description"]
     search_fields = ["title", "brand", "model_name", "vin", "description"]
     ordering_fields = ["created_at", "manufacture_year", "price", "mileage_km"]
     ordering = ["-created_at"]

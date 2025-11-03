@@ -19,6 +19,7 @@ inventory/api/routers.py
 inventory/api/serializers.py
 inventory/api/viewsets.py
 inventory/migrations/0001_initial.py
+inventory/migrations/0002_add_make_model_lookups.py
 inventory/migrations/__init__.py
 inventory/services/__init__.py
 inventory/services/image_processing.py
