@@ -62,6 +62,7 @@ class PublicationLogViewSet(viewsets.ModelViewSet):
 class CarViewSet(viewsets.ModelViewSet):
     queryset = (
         models.Car.objects.select_related("make", "model")
+        models.Car.objects.select_related()
         .prefetch_related(
             "features",
             Prefetch("images", queryset=models.CarImage.objects.order_by("ordering", "id")),
@@ -78,6 +79,8 @@ class CarViewSet(viewsets.ModelViewSet):
         "status",
         "make",
         "model",
+        "brand",
+        "model_name",
         "manufacture_year",
         "fuel_type",
         "body_type",
@@ -85,6 +88,7 @@ class CarViewSet(viewsets.ModelViewSet):
         "customs_cleared",
     ]
     search_fields = ["title", "make__title", "model__title", "vin", "description"]
+    search_fields = ["title", "brand", "model_name", "vin", "description"]
     ordering_fields = ["created_at", "manufacture_year", "price", "mileage_km"]
     ordering = ["-created_at"]
 

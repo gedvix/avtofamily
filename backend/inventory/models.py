@@ -124,6 +124,8 @@ class Car(TimestampedModel):
         related_name="cars",
         verbose_name="Модель",
     )
+    brand = models.CharField("Марка", max_length=80)
+    model_name = models.CharField("Модель", max_length=80)
     generation = models.CharField("Поколение", max_length=80, blank=True)
     manufacture_year = models.PositiveSmallIntegerField("Год выпуска")
     price = models.DecimalField(
@@ -227,6 +229,35 @@ class Car(TimestampedModel):
             self.status_changed_at = timezone.now()
 
         super().save(*args, **kwargs)
+
+            self.slug = slugify(f"{make_slug}-{model_slug}-{self.vin or self.pk or ''}")
+            models.Index(fields=["brand", "model_name"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.brand} {self.model_name} ({self.manufacture_year})"
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(f"{self.brand}-{self.model_name}-{self.vin or self.pk or ''}")
+        if self.status == self.Status.PUBLISHED and not self.published_at:
+            self.published_at = timezone.now()
+        if "update_fields" in kwargs and kwargs["update_fields"]:
+            if "status" in kwargs["update_fields"]:
+                self.status_changed_at = timezone.now()
+        elif self.pk is None or "status" in self.get_dirty_fields():
+            self.status_changed_at = timezone.now()
+        super().save(*args, **kwargs)
+
+    def get_dirty_fields(self) -> set[str]:
+        if not self.pk:
+            return {"status"}
+        old = Car.objects.get(pk=self.pk)
+        changed = set()
+        for field in ["status"]:
+            if getattr(old, field) != getattr(self, field):
+                changed.add(field)
+        return changed
 
 
 class CarImage(TimestampedModel):

@@ -6,6 +6,8 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.utils import timezone
 from django.utils.text import slugify
 from PIL import Image
+from PIL import Image
+from django.utils import timezone
 
 from inventory import models
 
@@ -26,6 +28,11 @@ def test_car_status_timestamp_updates(db):
         title="Test Car",
         make=make,
         model=model,
+def test_car_status_timestamp_updates(db):
+    car = models.Car.objects.create(
+        title="Test Car",
+        brand="Audi",
+        model_name="A4",
         manufacture_year=2020,
         price=25000,
         currency="USD",
@@ -51,6 +58,10 @@ def test_publication_log_str(db):
         title="Test Car",
         make=make,
         model=model,
+    car = models.Car.objects.create(
+        title="Test Car",
+        brand="BMW",
+        model_name="X5",
         manufacture_year=2019,
         price=30000,
         currency="USD",
@@ -80,6 +91,10 @@ def test_car_image_is_optimised_on_save(db, settings, tmp_path):
         title="Optimised Car",
         make=make,
         model=model,
+    car = models.Car.objects.create(
+        title="Optimised Car",
+        brand="Audi",
+        model_name="Q7",
         manufacture_year=2021,
         price=50000,
         currency="USD",
@@ -112,6 +127,10 @@ def test_only_single_primary_image_is_kept(db, settings, tmp_path):
         title="Primary Car",
         make=make,
         model=model,
+    car = models.Car.objects.create(
+        title="Primary Car",
+        brand="Tesla",
+        model_name="Model S",
         manufacture_year=2022,
         price=90000,
         currency="USD",

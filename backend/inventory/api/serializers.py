@@ -90,6 +90,8 @@ class CarSerializer(serializers.ModelSerializer):
             "make_id",
             "model",
             "model_id",
+            "brand",
+            "model_name",
             "generation",
             "manufacture_year",
             "price",
@@ -122,6 +124,7 @@ class CarSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
+        read_only_fields = ["status_changed_at", "published_at", "created_at", "updated_at"]
 
     def create(self, validated_data):
         images_data = validated_data.pop("images", [])
