@@ -21,6 +21,7 @@ class CarImageInline(admin.TabularInline):
                 obj.image.url,
             )
         return "—"
+    fields = ("image", "caption", "is_primary", "ordering")
 
 
 @admin.register(models.Car)
@@ -29,6 +30,8 @@ class CarAdmin(admin.ModelAdmin):
         "title",
         "make",
         "model",
+        "brand",
+        "model_name",
         "manufacture_year",
         "price",
         "status",
@@ -38,6 +41,8 @@ class CarAdmin(admin.ModelAdmin):
         "status",
         "make",
         "model",
+        "brand",
+        "model_name",
         "manufacture_year",
         "fuel_type",
         "body_type",
@@ -46,11 +51,15 @@ class CarAdmin(admin.ModelAdmin):
         "title",
         "make__title",
         "model__title",
+        "brand",
+        "model_name",
         "vin",
         "description",
     )
     inlines = [CarImageInline]
     autocomplete_fields = ("make", "model", "features")
+    prepopulated_fields = {"slug": ("brand", "model_name", "manufacture_year")}
+    autocomplete_fields = ("features",)
     filter_horizontal = ("features",)
     fieldsets = (
         ("Основная информация", {
@@ -61,6 +70,8 @@ class CarAdmin(admin.ModelAdmin):
                 "status",
                 "make",
                 "model",
+                "brand",
+                "model_name",
                 "generation",
                 "manufacture_year",
                 "price",

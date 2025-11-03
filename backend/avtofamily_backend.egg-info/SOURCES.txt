@@ -24,3 +24,5 @@ inventory/migrations/__init__.py
 inventory/services/__init__.py
 inventory/services/image_processing.py
 inventory/tests/test_models.py
+inventory/migrations/__init__.py
+inventory/tests/test_models.py

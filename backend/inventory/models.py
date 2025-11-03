@@ -124,6 +124,8 @@ class Car(TimestampedModel):
         related_name="cars",
         verbose_name="Модель",
     )
+    brand = models.CharField("Марка", max_length=80)
+    model_name = models.CharField("Модель", max_length=80)
     generation = models.CharField("Поколение", max_length=80, blank=True)
     manufacture_year = models.PositiveSmallIntegerField("Год выпуска")
     price = models.DecimalField(
@@ -201,6 +203,15 @@ class Car(TimestampedModel):
             make_slug = self.make.slug or slugify(self.make.title)
             model_slug = self.model.slug or slugify(self.model.title)
             self.slug = slugify(f"{make_slug}-{model_slug}-{self.vin or self.pk or ''}")
+            models.Index(fields=["brand", "model_name"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.brand} {self.model_name} ({self.manufacture_year})"
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(f"{self.brand}-{self.model_name}-{self.vin or self.pk or ''}")
         if self.status == self.Status.PUBLISHED and not self.published_at:
             self.published_at = timezone.now()
         if "update_fields" in kwargs and kwargs["update_fields"]:
